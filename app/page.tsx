@@ -1,101 +1,198 @@
-import Image from "next/image";
+/* eslint-disable jsx-a11y/alt-text */
+/* eslint-disable @next/next/no-img-element */
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import Editor, { OnMount } from '@monaco-editor/react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
+import { editor } from 'monaco-editor'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [markdown, setMarkdown] = useState('# Hello\n\nStart typing your README here...')
+  const [syncScroll, setSyncScroll] = useState(false)
+  const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleEditorDidMount: OnMount = (editor) => {
+    editorRef.current = editor
+  }
+
+  useEffect(() => {
+    if (!syncScroll || !editorRef.current || !previewRef.current) return
+
+    const editor = editorRef.current
+    const disposable = editor.onDidScrollChange(() => {
+      const preview = previewRef.current
+      if (!editor || !preview) return
+
+      const editorScrollTop = editor.getScrollTop()
+      const editorScrollHeight = editor.getScrollHeight() - editor.getLayoutInfo().height
+      const scrollPercentage = editorScrollTop / editorScrollHeight
+      const previewScrollHeight = preview.scrollHeight - preview.clientHeight
+
+      preview.scrollTop = scrollPercentage * previewScrollHeight
+    })
+
+    return () => {
+      disposable.dispose()
+    }
+  }, [syncScroll])
+
+  return (
+    <div className='min-h-screen bg-gray-50 dark:bg-gray-900'>
+      <div className='max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8'>
+        {/* Header */}
+        <div className='flex items-center justify-between mb-6'>
+          <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>README Preview</h1>
+          <button
+            onClick={() => setSyncScroll(!syncScroll)}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              syncScroll
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+            }`}>
+            {syncScroll ? 'Scroll Sync: ON' : 'Scroll Sync: OFF'}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Editor and Preview Grid */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+          {/* Monaco Editor */}
+          <div className='h-[80vh] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm'>
+            <Editor
+              height='100%'
+              defaultLanguage='markdown'
+              defaultValue={markdown}
+              onChange={(value) => setMarkdown(value || '')}
+              onMount={handleEditorDidMount}
+              theme='vs-dark'
+              options={{
+                minimap: { enabled: false },
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                fontSize: 14,
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                padding: { top: 16, bottom: 16 },
+                scrollBeyondLastLine: false,
+                scrollBeyondLastColumn: 3,
+              }}
+            />
+          </div>
+
+          {/* Markdown Preview */}
+          <div
+            ref={previewRef}
+            className='h-[80vh] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-y-auto'>
+            <div className='p-8'>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  h1: ({ ...props }) => (
+                    <h1
+                      {...props}
+                      className='pb-3 mb-6 border-b border-gray-200 dark:border-gray-700 text-3xl font-semibold text-gray-900 dark:text-white'
+                    />
+                  ),
+                  h2: ({ ...props }) => (
+                    <h2
+                      {...props}
+                      className='mt-6 mb-4 text-2xl font-semibold text-gray-900 dark:text-white'
+                    />
+                  ),
+                  h3: ({ ...props }) => (
+                    <h3
+                      {...props}
+                      className='mt-5 mb-3 text-xl font-semibold text-gray-900 dark:text-white'
+                    />
+                  ),
+                  p: ({ ...props }) => (
+                    <p
+                      {...props}
+                      className='mb-4 text-gray-700 dark:text-gray-300 leading-relaxed'
+                    />
+                  ),
+                  a: ({ ...props }) => (
+                    <a
+                      {...props}
+                      className='text-blue-600 hover:underline dark:text-blue-400'
+                    />
+                  ),
+                  ul: ({ ...props }) => (
+                    <ul
+                      {...props}
+                      className='mb-4 ml-5 list-disc text-gray-700 dark:text-gray-300'
+                    />
+                  ),
+                  ol: ({ ...props }) => (
+                    <ol
+                      {...props}
+                      className='mb-4 ml-5 list-decimal text-gray-700 dark:text-gray-300'
+                    />
+                  ),
+                  li: ({ ...props }) => (
+                    <li
+                      {...props}
+                      className='mb-1'
+                    />
+                  ),
+                  blockquote: ({ ...props }) => (
+                    <blockquote
+                      {...props}
+                      className='pl-4 mb-4 border-l-4 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                    />
+                  ),
+                  code: ({ inline, ...props }: { inline?: boolean } & React.HTMLProps<HTMLElement>) =>
+                    inline ? (
+                      <code
+                        {...props}
+                        className='px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm font-mono'
+                      />
+                    ) : (
+                      <code
+                        {...props}
+                        className='block p-4 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm font-mono overflow-x-auto'
+                      />
+                    ),
+                  img: ({ ...props }) => (
+                    <img
+                      {...props}
+                      className='max-w-full h-auto rounded-lg dark:border-gray-700'
+                    />
+                  ),
+                  table: ({ ...props }) => (
+                    <div className='overflow-x-auto mb-4'>
+                      <table
+                        {...props}
+                        className='min-w-full border border-gray-200 dark:border-gray-700 rounded-lg'
+                      />
+                    </div>
+                  ),
+                  th: ({ ...props }) => (
+                    <th
+                      {...props}
+                      className='px-4 py-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-left text-gray-900 dark:text-white'
+                    />
+                  ),
+                  td: ({ ...props }) => (
+                    <td
+                      {...props}
+                      className='px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                    />
+                  ),
+                }}>
+                {markdown}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+
+        <div className='text-center text-sm text-gray-500 dark:text-gray-400'>
+          Edit your README and see the preview in real-time with GitHub-style formatting
+        </div>
+      </div>
     </div>
-  );
+  )
 }
